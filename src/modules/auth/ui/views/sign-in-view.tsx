@@ -14,8 +14,9 @@ import { authClient } from "@/lib/auth-client";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { FaGithub, FaGoogle } from "react-icons/fa";
 
 const formSchema = z.object({
     email: z.string().email(),
@@ -25,6 +26,7 @@ const formSchema = z.object({
 export const SignInView = () => {
 
     const router = useRouter();
+
     const [error, setError] = useState<string | null>(null);
     const [pending, setPending] = useState(false);
 
@@ -45,11 +47,36 @@ export const SignInView = () => {
             {
                 email: data.email,
                 password: data.password,
+                callbackURL: "/"
+            },
+            {
+                onSuccess: () => {
+                    router.push("/");
+                    setPending(false);
+                },
+                onError: ({error}) => {
+                    setPending(false);
+                    setError(error.message)
+                }
+            }
+        );
+
+        
+    }; 
+
+        const onSocial = (provider: "github" | "google") => {
+        setError(null);
+        setPending(true);
+
+
+        authClient.signIn.social(
+            {
+               provider: provider,
+               callbackURL: "/"
             },
             {
                 onSuccess: () => {
                     setPending(false);
-                    router.push("/");
                 },
                 onError: ({error}) => {
                     setError(error.message)
@@ -58,7 +85,7 @@ export const SignInView = () => {
         );
 
         
-    }; 
+    };
 
     return (
         <div className="flex flex-col gap-6">
@@ -111,11 +138,13 @@ export const SignInView = () => {
                                     </span>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <Button disabled={pending} variant="outline" type="button" className="w-full">
-                                        Google
+                                    <Button disabled={pending} variant="outline" type="button" className="w-full"
+                                    onClick={()=> onSocial("google")}>
+                                        <FaGoogle />
                                     </Button>
-                                    <Button disabled={pending} variant="outline" type="button" className="w-full">
-                                        Github
+                                    <Button disabled={pending} variant="outline" type="button" className="w-full" 
+                                    onClick={()=> onSocial("github")}>
+                                        <FaGithub />
                                     </Button>
                                 </div>
                                 <div className="text-center text-sm">
@@ -145,3 +174,6 @@ export const SignInView = () => {
         </div>
     );
 };
+
+
+//onClick={()=>{ authClient.signIn.social({provider: "github",})}}> for the buttons
