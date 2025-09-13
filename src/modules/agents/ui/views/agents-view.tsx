@@ -7,18 +7,22 @@ import { ErrorState } from "@/components/error-state";
 import { DataTable } from "../components/data-table";
 import { columns } from "../components/columns";
 import { EmptyState } from "@/components/empty-state";
+import { useAgentsFilter } from "../../hooks/use-agents-filters";
 
 
 
 export const AgentView = () => {
+    const [filters] = useAgentsFilter();
 
     const trpc = useTRPC();
-    const { data } = useSuspenseQuery(trpc.agents.getMany.queryOptions());
+    const { data } = useSuspenseQuery(trpc.agents.getMany.queryOptions({
+        ...filters,
+    }));
 
     return (
         <div className="pb-4 flex-1 px-4 md:px-8 flex-col flex gap-y-4">
-            <DataTable data={data} columns={columns} />
-            {data.length === 0 && (
+            <DataTable data={data.items} columns={columns} />
+            {data.items.length === 0 && (
                 <EmptyState title="create your first agent"
                 description="Create an Agent to join your meetings, 
                 each agent will follow your instructions and can interact with particpants during the calls" />
