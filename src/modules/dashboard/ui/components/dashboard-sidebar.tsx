@@ -9,7 +9,7 @@ import {
     SidebarMenuButton, SidebarGroup
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
-import { BotIcon, StarIcon, VideoIcon } from "lucide-react";
+import { BotIcon, StarIcon, VideoIcon, BookCopyIcon, BookOpen } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -38,6 +38,23 @@ const secondSection = [
 ]
 
 
+const addedSection = [
+
+    {
+        icon: BookCopyIcon,
+        label: "Transcribe",
+        href: "/transcribe"
+    },
+
+    {
+        icon: BookOpen,
+        label: "DocConverter",
+        href: "/docconverter"
+
+    }
+]
+
+
 export const DashboardSidebar = () => {
 
     const pathname = usePathname()
@@ -60,6 +77,36 @@ export const DashboardSidebar = () => {
                     <SidebarGroupContent>
                         <SidebarMenu>
                             {firstSection.map((item) => (
+                                <SidebarMenuItem key={item.href}>
+                                    <SidebarMenuButton
+                                        asChild
+                                        className={cn(
+                                            "h-10 hover:bg-linear-to-r/oklch border border-transparent hover:border-[#5d6b68]/10 from-sidebar-accent from-5% via-30% via-sidebar/50 to-sidebar/50",
+                                            pathname === item.href && "bg-linear-to-r/oklch border-[#5d6b68]/10"
+                                        )}
+                                        isActive={pathname === item.href}
+                                    >
+                                        <Link href={item.href}>
+                                            <item.icon className="size-5" />
+                                            <span className="text-sm font-medium tracking-tight">
+                                                {item.label}
+                                            </span>
+                                        </Link>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            ))}
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
+
+                <div className="py-2 px-4">
+                    <Separator className="opacity-10 text-[#5d6b68]" />
+                </div>
+
+                <SidebarGroup>
+                    <SidebarGroupContent>
+                        <SidebarMenu>
+                            {addedSection.map((item) => (
                                 <SidebarMenuItem key={item.href}>
                                     <SidebarMenuButton
                                         asChild
