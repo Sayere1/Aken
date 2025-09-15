@@ -117,3 +117,23 @@ export const transcribe = pgTable("transcribe", {
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+
+export const documentConverter = pgTable("Dconverter", {
+    id: text("id")
+        .primaryKey()
+        .$defaultFn(() => nanoid()),
+
+    name: text("name").notNull(),
+
+    userId: text("user_id")
+        .notNull()
+        .references(() => user.id, { onDelete: "cascade" }),
+
+
+
+    docTypeA: text("PdfDoc"),
+    docTypeB: text("WordDoc"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});

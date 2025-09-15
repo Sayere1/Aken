@@ -24,7 +24,7 @@ export const MeetingsViewLoading = () => {
 };
 
 
-export const MeetingsViewError = () => {
+export const TMeetingsViewError = () => {
     return (
         <ErrorState title="Error loading Meetings" description="Try again..." />
     )

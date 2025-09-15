@@ -1,9 +1,30 @@
+
+
+import { TranscribeView, TranscribeViewError, TranscribeViewLoading } from "@/modules/transcribe/ui/views/transcribe_view";
+import { getQueryClient, trpc } from "@/trpc/server";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { Suspense } from "react";
+import { ErrorBoundary } from "react-error-boundary";
+
+
 const Page = () => {
+
+    const queryClient = getQueryClient();
+    void queryClient.prefetchQuery(
+        trpc.transcribe.getMany.queryOptions({})
+    );
+
     return (
-        <div>
-            transcribe Page
-        </div>
+        <HydrationBoundary state={dehydrate(queryClient)}>
+            <Suspense fallback={<TranscribeViewLoading />}>
+                <ErrorBoundary fallback={<TranscribeViewError />}>
+                    <TranscribeView />
+                </ErrorBoundary>
+            </Suspense>
+        </HydrationBoundary>
     )
 }
 
-export default Page
+export default Page;
+
+
