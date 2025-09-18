@@ -150,10 +150,10 @@ return (
                 </FormControl>
                 <FormDescription>
                     Not Found what you&apos;re looking for?{" "}
-                    <Button type="button" onClick={() => setOpenNewAgentDialog(true)}
-                        className="hover:text-primary underline">
+                    <span  onClick={() => setOpenNewAgentDialog(true)}
+                        className="hover:text-primary underline cursor-pointer">
                         Create new Agent
-                    </Button>
+                    </span>
                 </FormDescription>
                 <FormMessage />
             </FormItem>

@@ -35,7 +35,7 @@ export const MeetingsView = () => {
                       )}
         </div>
     )
-}
+};
 
 
 export const MeetingsViewLoading = () => {
