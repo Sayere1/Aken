@@ -12,6 +12,8 @@ import {
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { formatDuration } from "@/lib/utils";
+import { Transcript } from "./transcript";
+import { ChatProvider } from "./chat-provider";
 
 interface Props {
     data: MeetingGetOne;
@@ -60,6 +62,14 @@ export const CompletedState = ({ data }: Props) => {
                     </ScrollArea>
                 </div>
 
+                <TabsContent value="chat">
+                    <ChatProvider meetingId={data.id} meetingName={data.name} />
+                </TabsContent>
+
+                <TabsContent value="transcript">
+                    <Transcript meetingId={data.id} />
+                </TabsContent>
+
                 <TabsContent value="recording">
                     <div className="bg-white rounded-lg border px-4 py-5">
                         <video src={data.recordingUrl!} className="w-full rounded-lg" controls />
@@ -99,28 +109,28 @@ export const CompletedState = ({ data }: Props) => {
                                     h4: (props) => (
                                         <h4 className="text-base font-medium mb-6" {...props} />
                                     ),
-                                                                        p: (props) => (
-                                        <p className="leading-relaxed mb-6" {...props}/>
+                                    p: (props) => (
+                                        <p className="leading-relaxed mb-6" {...props} />
                                     ),
-                                                                        ul: (props) => (
-                                        <ul className="list-inside list-disc mb-6" {...props}/>
+                                    ul: (props) => (
+                                        <ul className="list-inside list-disc mb-6" {...props} />
                                     ),
-                                                                        ol: (props) => (
-                                        <ol className="list-inside list-disc mb-6" {...props}/>
+                                    ol: (props) => (
+                                        <ol className="list-inside list-disc mb-6" {...props} />
                                     ),
-                                     li: (props) => (
-                                        <li className="mb-1" {...props}/>
+                                    li: (props) => (
+                                        <li className="mb-1" {...props} />
                                     ),
-                                     strong: (props) => (
-                                        <strong className="font-semibold" {...props}/>
+                                    strong: (props) => (
+                                        <strong className="font-semibold" {...props} />
                                     ),
-                                     code: (props) => (
-                                        <code className="bg-gray-100 px-1 py-0.5 rounded" {...props}/>
+                                    code: (props) => (
+                                        <code className="bg-gray-100 px-1 py-0.5 rounded" {...props} />
                                     ),
-                                     blockquote: (props) => (
-                                        <blockquote className="border-l-4 pl-4 italic my-4" {...props}/>
+                                    blockquote: (props) => (
+                                        <blockquote className="border-l-4 pl-4 italic my-4" {...props} />
                                     ),
-                                    
+
                                 }} >
                                     {data.summary}
                                 </Markdown>
