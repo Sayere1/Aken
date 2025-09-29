@@ -8,7 +8,7 @@ export const HomeView = () => {
 
     return (
         <div>
-            
+            Home is Home
         </div>
     );
 };

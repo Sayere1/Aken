@@ -9,16 +9,18 @@ import { z } from "zod";
 import { agentInsertSchema } from "../../schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { Form, FormField,
+import {
+    Form, FormField,
     FormItem, FormControl,
     FormLabel, FormMessage
- } from "@/components/ui/form";
+} from "@/components/ui/form";
 
 import { GeneratedAvatar } from "@/components/generated-avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 
 interface AgentFormProps {
@@ -27,36 +29,43 @@ interface AgentFormProps {
     initialValues?: AgentGetOne;
 };
 
-export const AgentForm = ({onSuccess, onCancel, initialValues}: AgentFormProps) => {
+export const AgentForm = ({ onSuccess, onCancel, initialValues }: AgentFormProps) => {
     const trpc = useTRPC();
     const queryClient = useQueryClient();
+    const router = useRouter();
 
     const createAgent = useMutation(trpc.agents.create.mutationOptions({
         onSuccess: async () => {
-           await queryClient.invalidateQueries(
+            await queryClient.invalidateQueries(
                 trpc.agents.getMany.queryOptions({}),
             );
 
-            //TODO: invalidate free tier usage
+            await queryClient.invalidateQueries(
+                trpc.premium.getFreeUsage.queryOptions(),
+            );
+
+
             onSuccess?.();
         },
         onError: (error) => {
             toast.error(error.message);
 
-            //TODO: check if error code is "FORBBIDEN", redirect to "/upgrade"
+            if (error.data?.code === "FORBIDDEN") {
+                router.push("/upgrade");
+            }
         },
     }),
-);
+    );
 
     const updateAgent = useMutation(trpc.agents.update.mutationOptions({
         onSuccess: async () => {
-           await queryClient.invalidateQueries(
+            await queryClient.invalidateQueries(
                 trpc.agents.getMany.queryOptions({}),
             );
 
             if (initialValues?.id) {
-               await queryClient.invalidateQueries(
-                    trpc.agents.getOne.queryOptions({id: initialValues.id}),
+                await queryClient.invalidateQueries(
+                    trpc.agents.getOne.queryOptions({ id: initialValues.id }),
                 )
             }
             onSuccess?.();
@@ -64,79 +73,78 @@ export const AgentForm = ({onSuccess, onCancel, initialValues}: AgentFormProps) 
         onError: (error) => {
             toast.error(error.message);
 
-            //TODO: check if error code is "FORBBIDEN", redirect to "/upgrade"
         },
     }),
-);
+    );
 
 
-const form = useForm<z.infer<typeof agentInsertSchema>>({
-    resolver: zodResolver(agentInsertSchema),
-    defaultValues: {
-        name: initialValues?.name ?? "",
-        instructions: initialValues?.instructions ?? "",
-    },
-});
+    const form = useForm<z.infer<typeof agentInsertSchema>>({
+        resolver: zodResolver(agentInsertSchema),
+        defaultValues: {
+            name: initialValues?.name ?? "",
+            instructions: initialValues?.instructions ?? "",
+        },
+    });
 
-const isEdit = !!initialValues?.id;
-const isPending = createAgent.isPending || updateAgent.isPending;
+    const isEdit = !!initialValues?.id;
+    const isPending = createAgent.isPending || updateAgent.isPending;
 
-const onSubmit = (values: z.infer<typeof agentInsertSchema>) => {
-    if (isEdit) {
-        updateAgent.mutate({...values, id: initialValues.id})
-    } else {
-        createAgent.mutate(values);
-    }
-};
+    const onSubmit = (values: z.infer<typeof agentInsertSchema>) => {
+        if (isEdit) {
+            updateAgent.mutate({ ...values, id: initialValues.id })
+        } else {
+            createAgent.mutate(values);
+        }
+    };
 
 
-return (
-    <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <GeneratedAvatar seed={form.watch("name")} variant="botttsNeutral"
-            className="border size-16" />
+    return (
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <GeneratedAvatar seed={form.watch("name")} variant="botttsNeutral"
+                    className="border size-16" />
 
-                    <FormField name="name" control={form.control}
-        render={({field}) => (
-            <FormItem>
-                <FormLabel>Name</FormLabel>
-                <FormControl>
-                    <Input {...field} placeholder="e.g Coach" />
-                </FormControl>
-                <FormMessage />
-            </FormItem>
-        )}/>
+                <FormField name="name" control={form.control}
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Name</FormLabel>
+                            <FormControl>
+                                <Input {...field} placeholder="e.g Coach" />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
 
                 <FormField name="instructions" control={form.control}
-        render={({field}) => (
-            <FormItem>
-                <FormLabel>Instructions</FormLabel>
-                <FormControl>
-                    <Textarea {...field} placeholder="Your reliable experience and reliable coach" />
-                </FormControl>
-                <FormMessage />
-            </FormItem>
-        )}/>
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Instructions</FormLabel>
+                            <FormControl>
+                                <Textarea {...field} placeholder="Your reliable experience and reliable coach" />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
 
-        <div className="justify-between gap-x-2 flex">
-            {onCancel && (
-                <Button variant="ghost"
-                disabled={isPending}
-                type="button"
-                onClick={() => onCancel()}>
-                    Cancel
-                </Button>
-            )}
+                <div className="justify-between gap-x-2 flex">
+                    {onCancel && (
+                        <Button variant="ghost"
+                            disabled={isPending}
+                            type="button"
+                            onClick={() => onCancel()}>
+                            Cancel
+                        </Button>
+                    )}
 
-            <Button disabled={isPending} type="submit">
-                {isEdit ? "Update" : "Create"}
-            </Button>
-        </div>
+                    <Button disabled={isPending} type="submit">
+                        {isEdit ? "Update" : "Create"}
+                    </Button>
+                </div>
 
-        </form>
+            </form>
 
-    </Form>
-);
+        </Form>
+    );
 
 };
 

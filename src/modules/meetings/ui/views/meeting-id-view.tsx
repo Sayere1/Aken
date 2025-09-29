@@ -20,28 +20,32 @@ interface Props {
     meetingId: string;
 };
 
-export const MeetingIdView = ({meetingId} : Props) => {
+export const MeetingIdView = ({ meetingId }: Props) => {
 
     const trpc = useTRPC();
     const queryClient = useQueryClient();
     const router = useRouter();
 
-    const [ updateMeetingDialogOpen, setUpdateMeetingDialogOpen] = useState(false);
+    const [updateMeetingDialogOpen, setUpdateMeetingDialogOpen] = useState(false);
 
-    const [ RemoveConfirmation, confirmRemove ] = useConfirm(
+    const [RemoveConfirmation, confirmRemove] = useConfirm(
         "Are you sure?",
         "The following actions will permanetly delete this meeting"
     );
 
     const { data } = useSuspenseQuery(
-        trpc.meetings.getOne.queryOptions({id: meetingId}),
+        trpc.meetings.getOne.queryOptions({ id: meetingId }),
     );
 
     const removeMeeting = useMutation(
         trpc.meetings.remove.mutationOptions({
-            onSuccess: () => {
-                queryClient.invalidateQueries(trpc.meetings.getMany.queryOptions({}));
-                //TODO: invalidate free teir usage
+            onSuccess: async () => {
+                await queryClient.invalidateQueries(trpc.meetings.getMany.queryOptions({}));
+
+                await queryClient.invalidateQueries(
+                    trpc.premium.getFreeUsage.queryOptions(),
+                );
+
                 router.push("/meetings");
             },
         }),
@@ -52,7 +56,7 @@ export const MeetingIdView = ({meetingId} : Props) => {
 
         if (!ok) return;
 
-        await removeMeeting.mutateAsync({id: meetingId});
+        await removeMeeting.mutateAsync({ id: meetingId });
     };
 
     const isActive = data.status === "active";
@@ -63,21 +67,21 @@ export const MeetingIdView = ({meetingId} : Props) => {
 
     return (
         <>
-        <RemoveConfirmation />
-        <UpdateMeetingDialog open={updateMeetingDialogOpen} onOpenChange={setUpdateMeetingDialogOpen} 
-        initialValues={data} />
-        <div className="flex-1 md:px-8 gap-y-4 flex-col px-4 py-4 flex">
-            <MeetingIdViewHeader meetingId={meetingId} meetingName={data.name}
-            onEdit={() => setUpdateMeetingDialogOpen(true)}
-            onRemove={handleRemoveMeeting}/>
-            {isCancelled && <CancelState />}
-            {isProcessing && <ProcessingState />}
-            {isCompleted && <CompletedState data={data} />}
-            {isActive && <ActiveState meetingId={meetingId} />}
-            {isUpcoming && ( <UpcomingState meetingId={meetingId}
-            onCancelMeeting={() => {}} 
-            isCancelling={false}/>)}
-        </div>
+            <RemoveConfirmation />
+            <UpdateMeetingDialog open={updateMeetingDialogOpen} onOpenChange={setUpdateMeetingDialogOpen}
+                initialValues={data} />
+            <div className="flex-1 md:px-8 gap-y-4 flex-col px-4 py-4 flex">
+                <MeetingIdViewHeader meetingId={meetingId} meetingName={data.name}
+                    onEdit={() => setUpdateMeetingDialogOpen(true)}
+                    onRemove={handleRemoveMeeting} />
+                {isCancelled && <CancelState />}
+                {isProcessing && <ProcessingState />}
+                {isCompleted && <CompletedState data={data} />}
+                {isActive && <ActiveState meetingId={meetingId} />}
+                {isUpcoming && (<UpcomingState meetingId={meetingId}
+                    onCancelMeeting={() => { }}
+                    isCancelling={false} />)}
+            </div>
         </>
     )
 };

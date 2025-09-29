@@ -9,11 +9,12 @@ import { z } from "zod";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { Form, FormField,
+import {
+    Form, FormField,
     FormItem, FormControl,
     FormLabel, FormMessage,
     FormDescription
- } from "@/components/ui/form";
+} from "@/components/ui/form";
 
 
 
@@ -26,6 +27,7 @@ import { useState } from "react";
 import { CommandSelect } from "@/components/command-select";
 import { GeneratedAvatar } from "@/components/generated-avatar";
 import { NewAgentDialog } from "@/modules/agents/ui/components/new-agent-dialog";
+import { useRouter } from "next/navigation";
 
 
 
@@ -36,11 +38,12 @@ interface MeetingFormProps {
     initialValues?: MeetingGetOne;
 };
 
-export const MeetingForm = ({onSuccess, onCancel, initialValues}: MeetingFormProps) => {
+export const MeetingForm = ({ onSuccess, onCancel, initialValues }: MeetingFormProps) => {
     const trpc = useTRPC();
     const queryClient = useQueryClient();
+    const router = useRouter();
 
-    const [ agentSearch, setAgentSearch ] = useState("");
+    const [agentSearch, setAgentSearch] = useState("");
     const [openNewAgentDialog, setOpenNewAgentDialog] = useState(false);
 
     const agents = useQuery(
@@ -53,133 +56,136 @@ export const MeetingForm = ({onSuccess, onCancel, initialValues}: MeetingFormPro
 
     const createMeeting = useMutation(trpc.meetings.create.mutationOptions({
         onSuccess: async (data) => {
-           await queryClient.invalidateQueries(
+            await queryClient.invalidateQueries(
                 trpc.meetings.getMany.queryOptions({}),
             );
 
-            //TODO: invalidate free tier usage
+            await queryClient.invalidateQueries(
+                trpc.premium.getFreeUsage.queryOptions(),
+            );
+
             onSuccess?.(data.id);
         },
         onError: (error) => {
             toast.error(error.message);
 
-            //TODO: check if error code is "FORBBIDEN", redirect to "/upgrade"
+            if (error.data?.code === "FORBIDDEN") {
+                router.push("/upgrade");
+            }
         },
     }),
-);
+    );
 
     const updateMeeting = useMutation(trpc.meetings.update.mutationOptions({
         onSuccess: async () => {
-           await queryClient.invalidateQueries(
+            await queryClient.invalidateQueries(
                 trpc.meetings.getMany.queryOptions({}),
             );
 
             if (initialValues?.id) {
-               await queryClient.invalidateQueries(
-                    trpc.meetings.getOne.queryOptions({id: initialValues.id}),
+                await queryClient.invalidateQueries(
+                    trpc.meetings.getOne.queryOptions({ id: initialValues.id }),
                 )
             }
             onSuccess?.();
         },
         onError: (error) => {
             toast.error(error.message);
-
-            //TODO: check if error code is "FORBBIDEN", redirect to "/upgrade"
         },
     }),
-);
+    );
 
 
-const form = useForm<z.infer<typeof meetingsInsertSchema>>({
-    resolver: zodResolver(meetingsInsertSchema),
-    defaultValues: {
-        name: initialValues?.name ?? "",
-        agentId: initialValues?.agentId ?? "",
-    },
-});
+    const form = useForm<z.infer<typeof meetingsInsertSchema>>({
+        resolver: zodResolver(meetingsInsertSchema),
+        defaultValues: {
+            name: initialValues?.name ?? "",
+            agentId: initialValues?.agentId ?? "",
+        },
+    });
 
-const isEdit = !!initialValues?.id;
-const isPending = createMeeting.isPending || updateMeeting.isPending;
+    const isEdit = !!initialValues?.id;
+    const isPending = createMeeting.isPending || updateMeeting.isPending;
 
-const onSubmit = (values: z.infer<typeof meetingsInsertSchema>) => {
-    if (isEdit) {
-        updateMeeting.mutate({...values, id: initialValues.id})
-    } else {
-        createMeeting.mutate(values);
-    }
-};
+    const onSubmit = (values: z.infer<typeof meetingsInsertSchema>) => {
+        if (isEdit) {
+            updateMeeting.mutate({ ...values, id: initialValues.id })
+        } else {
+            createMeeting.mutate(values);
+        }
+    };
 
 
-return (
-    <>
-    <NewAgentDialog open={openNewAgentDialog} onOpenChange={setOpenNewAgentDialog} />
-    <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+    return (
+        <>
+            <NewAgentDialog open={openNewAgentDialog} onOpenChange={setOpenNewAgentDialog} />
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <FormField name="name" control={form.control}
-        render={({field}) => (
-            <FormItem>
-                <FormLabel>Name</FormLabel>
-                <FormControl>
-                    <Input {...field} placeholder="e.g Interview consultation" />
-                </FormControl>
-                <FormMessage />
-            </FormItem>
-        )}/>
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Name</FormLabel>
+                                <FormControl>
+                                    <Input {...field} placeholder="e.g Interview consultation" />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
 
                     <FormField name="agentId" control={form.control}
-        render={({field}) => (
-            <FormItem>
-                <FormLabel>Agent</FormLabel>
-                <FormControl>
-                    <CommandSelect options={(agents.data?.items ?? []).map((agent) => ({
-                        id: agent.id,
-                        value: agent.id,
-                        children: (
-                            <div className="gap-x-2 flex items-center">
-                                <GeneratedAvatar seed={agent.name} variant="botttsNeutral" 
-                                className="border size-6" />
-                                <span>{agent.name}</span>
-                            </div>
-                        )
-                    }))} 
-                    onSelect={field.onChange}
-                    OnSearch={setAgentSearch}
-                    value={field.value}
-                    placeholder="Select an Agent"
-                    />
-                </FormControl>
-                <FormDescription>
-                    Not Found what you&apos;re looking for?{" "}
-                    <span  onClick={() => setOpenNewAgentDialog(true)}
-                        className="hover:text-primary underline cursor-pointer">
-                        Create new Agent
-                    </span>
-                </FormDescription>
-                <FormMessage />
-            </FormItem>
-        )}/>
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Agent</FormLabel>
+                                <FormControl>
+                                    <CommandSelect options={(agents.data?.items ?? []).map((agent) => ({
+                                        id: agent.id,
+                                        value: agent.id,
+                                        children: (
+                                            <div className="gap-x-2 flex items-center">
+                                                <GeneratedAvatar seed={agent.name} variant="botttsNeutral"
+                                                    className="border size-6" />
+                                                <span>{agent.name}</span>
+                                            </div>
+                                        )
+                                    }))}
+                                        onSelect={field.onChange}
+                                        OnSearch={setAgentSearch}
+                                        value={field.value}
+                                        placeholder="Select an Agent"
+                                    />
+                                </FormControl>
+                                <FormDescription>
+                                    Not Found what you&apos;re looking for?{" "}
+                                    <span onClick={() => setOpenNewAgentDialog(true)}
+                                        className="hover:text-primary underline cursor-pointer">
+                                        Create new Agent
+                                    </span>
+                                </FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
 
-        <div className="justify-between gap-x-2 flex">
-            {onCancel && (
-                <Button variant="ghost"
-                disabled={isPending}
-                type="button"
-                onClick={() => onCancel()}>
-                    Cancel
-                </Button>
-            )}
+                    <div className="justify-between gap-x-2 flex">
+                        {onCancel && (
+                            <Button variant="ghost"
+                                disabled={isPending}
+                                type="button"
+                                onClick={() => onCancel()}>
+                                Cancel
+                            </Button>
+                        )}
 
-            <Button disabled={isPending} type="submit">
-                {isEdit ? "Update" : "Create"}
-            </Button>
-        </div>
+                        <Button disabled={isPending} type="submit">
+                            {isEdit ? "Update" : "Create"}
+                        </Button>
+                    </div>
 
-        </form>
+                </form>
 
-    </Form>
+            </Form>
 
-    </>
-);
+        </>
+    );
 
 };
 

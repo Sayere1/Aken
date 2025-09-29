@@ -19,7 +19,7 @@ interface Props {
     agentId: string;
 };
 
-export const AgentIdView = ({ agentId } : Props) => {
+export const AgentIdView = ({ agentId }: Props) => {
 
     const router = useRouter();
 
@@ -27,16 +27,19 @@ export const AgentIdView = ({ agentId } : Props) => {
 
     const queryClient = useQueryClient();
 
-    const [ UpdateAgentDialogOpen, setUpdateAgentDialogOpen] = useState(false);
+    const [UpdateAgentDialogOpen, setUpdateAgentDialogOpen] = useState(false);
 
     const { data } = useSuspenseQuery(trpc.agents.getOne.queryOptions({ id: agentId }));
 
     const removeAgent = useMutation(
         trpc.agents.remove.mutationOptions({
             onSuccess: async () => {
-               await queryClient.invalidateQueries(trpc.agents.getMany.queryOptions({}));
-                
-                //TODO: invalidate free tier usage
+                await queryClient.invalidateQueries(trpc.agents.getMany.queryOptions({}));
+
+                await queryClient.invalidateQueries(
+                    trpc.premium.getFreeUsage.queryOptions(),
+                );
+
 
                 router.push("/agents");
             },
@@ -46,7 +49,7 @@ export const AgentIdView = ({ agentId } : Props) => {
         }),
     );
 
-    const [ RemoveConfirmation, confirmRemove] = useConfirm(
+    const [RemoveConfirmation, confirmRemove] = useConfirm(
         "Are you sure?",
         `the following actions will remove ${data.meetingCount} associated with meetings`,
     );
@@ -56,37 +59,37 @@ export const AgentIdView = ({ agentId } : Props) => {
 
         if (!ok) return;
 
-        await removeAgent.mutateAsync({ id: agentId});
+        await removeAgent.mutateAsync({ id: agentId });
     };
 
 
     return (
 
         <>
-        <RemoveConfirmation />
-        <UpdateAgentDialog open={UpdateAgentDialogOpen} onOpenChange={setUpdateAgentDialogOpen} initialValues={data}/>
-        <div className="flex-1 py-4 px-4 flex flex-col gap-y-4 md:px-8">
-            <AgentIdViewHeader
-            agentId={agentId} agentName={data.name}
-            onEdit={() => setUpdateAgentDialogOpen(true)} onRemove={handleRemoveAgent}/>
-            <div className="rounded-lg border bg-white">
-                <div className="flex  flex-col col-span-5 px-4 py-5 gap-y-5">
-                    <div className="items-center gap-x-3 flex">
-                        <GeneratedAvatar variant="botttsNeutral" seed={data.name} 
-                        className="size-10" />
-                        <h2 className="text-2xl font-medium">{ data.name }</h2>
-                    </div>
-                    <Badge variant="outline" className="items-center flex gap-x-2 [&>svg]:size-4">
-                        <VideoIcon className="text-blue-700" />
-                        {data.meetingCount} {data.meetingCount === 1 ? "meeting" : "meetings"}
-                    </Badge>
-                    <div className="flex-col gap-y-4 flex">
-                        <p className="text-lg font-medium">Instructions</p>
-                        <p className="text-neutral-800">{data.instructions}</p>
+            <RemoveConfirmation />
+            <UpdateAgentDialog open={UpdateAgentDialogOpen} onOpenChange={setUpdateAgentDialogOpen} initialValues={data} />
+            <div className="flex-1 py-4 px-4 flex flex-col gap-y-4 md:px-8">
+                <AgentIdViewHeader
+                    agentId={agentId} agentName={data.name}
+                    onEdit={() => setUpdateAgentDialogOpen(true)} onRemove={handleRemoveAgent} />
+                <div className="rounded-lg border bg-white">
+                    <div className="flex  flex-col col-span-5 px-4 py-5 gap-y-5">
+                        <div className="items-center gap-x-3 flex">
+                            <GeneratedAvatar variant="botttsNeutral" seed={data.name}
+                                className="size-10" />
+                            <h2 className="text-2xl font-medium">{data.name}</h2>
+                        </div>
+                        <Badge variant="outline" className="items-center flex gap-x-2 [&>svg]:size-4">
+                            <VideoIcon className="text-blue-700" />
+                            {data.meetingCount} {data.meetingCount === 1 ? "meeting" : "meetings"}
+                        </Badge>
+                        <div className="flex-col gap-y-4 flex">
+                            <p className="text-lg font-medium">Instructions</p>
+                            <p className="text-neutral-800">{data.instructions}</p>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
         </>
     );
 };
