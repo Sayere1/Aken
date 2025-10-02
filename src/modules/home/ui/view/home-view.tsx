@@ -1,14 +1,26 @@
 "use client"
 
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+
+
 
 
 export const HomeView = () => {
 
+ 
 
 
     return (
         <div>
-            Home is Home
+
+            <Link href="/sign-in">
+
+            <Button >
+                login
+            </Button>
+            </Link>
+
         </div>
     );
 };

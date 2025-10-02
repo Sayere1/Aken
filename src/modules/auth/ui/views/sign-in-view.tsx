@@ -47,11 +47,11 @@ export const SignInView = () => {
             {
                 email: data.email,
                 password: data.password,
-                callbackURL: "/"
+                callbackURL: "/meetings"
             },
             {
                 onSuccess: () => {
-                    router.push("/");
+                    router.push("/meetings");
                     setPending(false);
                 },
                 onError: ({error}) => {
@@ -72,7 +72,7 @@ export const SignInView = () => {
         authClient.signIn.social(
             {
                provider: provider,
-               callbackURL: "/"
+               callbackURL: "/meetings"
             },
             {
                 onSuccess: () => {
